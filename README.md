@@ -24,22 +24,42 @@ Testing the C Program for the desired output.
 # PROGRAM:
 
 ## C Program that illustrate communication between two process using unnamed pipes using Linux API system calls
+~~~
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
+void server(int, int);
+void client(int, int);
 
+int main() {
+    int p1[2], p2[2], pid;
+    pipe(p1);
+    pipe(p2);
+    pid = fork();
 
+    if (pid == 0) {
+        close(p1[1]); // child closes write end of pipe1
+        close(p2[0]); // child closes read end of pipe2
+        server(p1[0], p2[1]);
+        exit(0);
+    }
 
+    close(p1[0]); // parent closes read end of pipe1
+    close(p2[1]); // parent closes write end of pipe2
+    client(p1[1], p2[0]);
+    wait(NULL);
+    return 0;
+}
 
-## OUTPUT
-
-
-## C Program that illustrate communication between two process using named pipes using Linux API system calls
-
-
-
-
-
-## OUTPUT
-
-
-# RESULT:
-The program is executed successfully.
+void server(int rfd, int wfd) {
+    int n;
+    char fname[2000], buff[2000];
+    n = read(rfd, fname, 2000);
+    fname[n] = '\0';
+    int fd = open(fname, O_RDONLY);
